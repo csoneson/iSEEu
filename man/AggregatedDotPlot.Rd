@@ -18,7 +18,7 @@
 \alias{.definePanelTour,AggregatedDotPlot-method}
 \alias{.createObservers,AggregatedDotPlot-method}
 \alias{.refineParameters,AggregatedDotPlot-method}
-\alias{.multiSelectResponsive,AggregateDotPlot-method}
+\alias{.multiSelectionResponsive,AggregateDotPlot-method}
 \alias{initialize,AggregatedDotPlot-method}
 \title{The AggregatedDotPlot class}
 \description{

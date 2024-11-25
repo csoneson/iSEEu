@@ -176,7 +176,7 @@
 #' .definePanelTour,AggregatedDotPlot-method
 #' .createObservers,AggregatedDotPlot-method
 #' .refineParameters,AggregatedDotPlot-method
-#' .multiSelectResponsive,AggregateDotPlot-method
+#' .multiSelectionResponsive,AggregateDotPlot-method
 #' initialize,AggregatedDotPlot-method
 NULL
 
