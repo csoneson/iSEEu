@@ -824,7 +824,7 @@ setMethod(".createObservers", "AggregatedDotPlot", function(x, se, input, sessio
 
 #' @export
 setMethod(".hideInterface", "AggregatedDotPlot", function(x, field) {
-    if (field %in% c(iSEE:::.multiSelectHistory)) {
+    if (field %in% c(iSEE:::.multiSelectHistory, iSEE:::.selectRowRestrict, iSEE:::.selectColumnRestrict)) {
         TRUE
     } else {
         callNextMethod()
