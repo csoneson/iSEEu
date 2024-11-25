@@ -429,7 +429,7 @@ setMethod(".generateOutput", "AggregatedDotPlot", function(x, se, all_memory, al
 
     # Row clustering.
     unclustered_cmds <- c(".rownames_ordered <- rev(rownames(.averages))")
-    if (x[[.ADPClusterFeatures]]) {
+    if (x[[.ADPClusterFeatures]] && nrow(plot_env$.averages) > 1L) {
         clustering_cmds <- c(
             sprintf(".averages_dist <- dist(.averages, method = %s);", deparse(x[[.ADPClusterDistanceFeatures]])),
             sprintf(".averages_hclust <- hclust(.averages_dist, method = %s);", deparse(x[[.ADPClusterMethodFeatures]])),
