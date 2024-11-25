@@ -58,6 +58,19 @@
 #' Defaults to \code{FALSE}.
 #' }
 #'
+#' The following slots control the clustering of rows:
+#' \itemize{
+#' \item \code{ClusterRows}, a logical scalar indicating whether clustering of the rows should be performed,
+#' so as to group genes that have more similar average expression profiles across groups.
+#' Defaults to \code{FALSE}.
+#' \item \code{ClusterRowsDistance}, string specifying the distance metric to use.
+#' This can be any one of \code{"euclidean"}, \code{"maximum"}, \code{"manhattan"}, \code{"canberra"}, \code{"binary"}, \code{"minkowski"}, \code{"pearson"}, \code{"spearman"}, or \code{"kendall"}.
+#' Defaults to \code{"euclidean"}.
+#' \item \code{ClusterRowsMethod}, string specifying a linkage method to use.
+#' This can be any one of \code{"ward.D"}, \code{"ward.D2"}, \code{"single"}, \code{"complete"}, \code{"average"}, \code{"mcquitty"}, \code{"median"}, or \code{"centroid"}.
+#' Defaults to \code{"ward.D2"}.
+#' }
+#'
 #' The following slots control the color:
 #' \itemize{
 #' \item \code{UseCustomColormap}, a logical scalar indicating whether to use a custom color scale.
