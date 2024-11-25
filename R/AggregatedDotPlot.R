@@ -157,6 +157,7 @@
 #' .definePanelTour,AggregatedDotPlot-method
 #' .createObservers,AggregatedDotPlot-method
 #' .refineParameters,AggregatedDotPlot-method
+#' .multiSelectResponsive,AggregateDotPlot-method
 #' initialize,AggregatedDotPlot-method
 NULL
 
@@ -828,6 +829,19 @@ setMethod(".hideInterface", "AggregatedDotPlot", function(x, field) {
     } else {
         callNextMethod()
     }
+})
+
+#' @export
+setMethod(".multiSelectionResponsive", "AggregatedDotPlot", function(x, dims = character(0)) {
+    if ("row" %in% dims) {
+        if (!slot(x, .ADPCustomFeatNames)) {
+            return(TRUE)
+        }
+    }
+    if ("column" %in% dims) {
+        return(TRUE)
+    }
+    return(FALSE)
 })
 
 #' @export
