@@ -464,6 +464,11 @@ setMethod(".generateOutput", "AggregatedDotPlot", function(x, se, all_memory, al
     .textEval(computation, plot_env)
     all_cmds$command <- computation
 
+    # Emitting a notification if we had to cap the number of rows.
+    if (length(plot_env$.chosen.rows) > nrow(plot_env$.averages)) {
+        showNotification(sprintf("number of features capped to %s in %s", nrow(plot_env$.averages), .getEncodedName(x)), type="warning")
+    }
+
     # Row clustering.
     unclustered_cmds <- c(".rownames_ordered <- rev(rownames(.averages))")
     if (x[[.ADPClusterFeatures]] && nrow(plot_env$.averages) > 1L) {
