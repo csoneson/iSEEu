@@ -892,13 +892,12 @@ setMethod(".hideInterface", "AggregatedDotPlot", function(x, field) {
 })
 
 #' @export
-setMethod(".multiSelectionResponsive", "AggregatedDotPlot", function(x, dims = character(0)) {
-    if ("row" %in% dims) {
+setMethod(".multiSelectionResponsive", "AggregatedDotPlot", function(x, dim) {
+    if (dim == "row") {
         if (!slot(x, .ADPCustomFeatNames)) {
             return(TRUE)
         }
-    }
-    if ("column" %in% dims) {
+    } else if (dim == "column") {
         return(TRUE)
     }
     return(FALSE)
