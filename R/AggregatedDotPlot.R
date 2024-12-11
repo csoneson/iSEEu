@@ -15,12 +15,10 @@
 #' typically corresponding to the row names of the \linkS4class{SummarizedExperiment}.
 #' Names should be new-line separated within this string.
 #' Defaults to the name of the first row in the SummarizedExperiment.
-#' \item \code{CapMaxRows}, a logical scalar indicating whether to cap the number of features to be shown on the plot.
-#' This ensures that the \pkg{iSEE} application does not freeze when asked to cluster a very large selection of rows.
-#' Defaults to \code{TRUE}, in which case a notification will be raised if the cap needs to be enforced.
-#' \item \code{MaxRows}, an integer specifying the cap on the number of features to be shown on the plot.
-#' Only used if \code{CapMaxRows} is set to \code{TRUE}.
-#' Defaults to 50.
+#' \item \code{CapRowSelection}, an integer specifying the cap on the number of rows from a multiple selection to show in the heatmap,
+#' to avoid a frozen state when the application attempts to process a very large heatmap.
+#' Ignored if \code{CustomRows = TRUE}.
+#' Defaults to 200.
 #' }
 #'
 #' The following slots control the specification of groups:
@@ -183,8 +181,8 @@ NULL
 .ADPAssay <- "Assay"
 .ADPCustomFeatNames <- "CustomRows"
 .ADPFeatNameText <- "CustomRowsText"
+.ADPCapRowSelection <- "CapRowSelection"
 .ADPClusterFeatures <- "ClusterRows"
-.ADPCapMaxRows <- "CapMaxRows"
 .ADPMaxRows <- "MaxRows"
 
 .ADPColDataLabel <- "ColumnDataLabel"
@@ -211,8 +209,7 @@ collated <- character(0)
 collated[.ADPAssay] <- "character"
 collated[.ADPCustomFeatNames] <- "logical"
 collated[.ADPFeatNameText] <- "character"
-collated[.ADPCapMaxRows] <- "logical"
-collated[.ADPMaxRows] <- "integer"
+collated[.ADPCapRowSelection] <- "integer"
 
 collated[.ADPColDataLabel] <- "character"
 collated[.ADPColDataFacet] <- "character"
@@ -254,10 +251,7 @@ setMethod("initialize", "AggregatedDotPlot", function(.Object, ...) {
     args <- .emptyDefault(args, .ADPAssay, getPanelDefault("Assay"))
     args <- .emptyDefault(args, .ADPCustomFeatNames, TRUE)
     args <- .emptyDefault(args, .ADPFeatNameText, NA_character_)
-
-    args <- .emptyDefault(args, .ADPCapMaxRows, TRUE)
-    args <- .emptyDefault(args, .ADPMaxRows, 50L)
-    args[[.ADPMaxRows]] <- as.integer(args[[.ADPMaxRows]])
+    args <- .emptyDefault(args, .ADPCapRowSelection, 200L)
 
     vals <- args[[.ADPFeatNameText]]
     if (length(vals)!=1L) {
@@ -318,12 +312,11 @@ setValidity2("AggregatedDotPlot", function(object) {
         )
     )
 
-    msg <- .validNumberError(msg, object, .ADPMaxRows, 1L, Inf)
+    msg <- .validNumberError(msg, object, .ADPCapRowSelection, 0, Inf)
 
     msg <- .validLogicalError(msg, object,
         c(
             .ADPCustomFeatNames,
-            .ADPCapMaxRows,
             .visualParamBoxOpen,
             .ADPCustomColor,
             .ADPExpressors,
@@ -425,7 +418,9 @@ setMethod(".generateOutput", "AggregatedDotPlot", function(x, se, all_memory, al
     all_cmds$select <- .processMultiSelections(x, all_memory, all_contents, plot_env)
     all_cmds$assay <- .extractAssaySubmatrix(x, se, plot_env,
         use_custom_row_slot=.ADPCustomFeatNames,
-        custom_row_text_slot=.ADPFeatNameText)
+        custom_row_text_slot=.ADPFeatNameText,
+        cap_row_selection_slot=.ADPCapRowSelection,
+        as_matrix=FALSE)
 
     # Computing the various statistics.
     col1 <- x[[.ADPColDataLabel]]
@@ -434,12 +429,6 @@ setMethod(".generateOutput", "AggregatedDotPlot", function(x, se, all_memory, al
     coldata.names <- c(col1, if (use.facets) col2)
     cmd <- sprintf(".group_by <- SummarizedExperiment::colData(se)[.chosen.columns,%s,drop=FALSE];",
         paste(deparse(coldata.names), collapse=""))
-
-    if (x[[.ADPCapMaxRows]]) {
-        # Arbitrarily taking the top rows.
-        # TODO: move this into .extractAssaySubmatrix.
-        cmd <- c(cmd, sprintf("plot.data <- head(plot.data, %s)", x[[.ADPMaxRows]]))
-    }
 
     computation <- c(cmd,
         ".averages.se <- scuttle::sumCountsAcrossCells(plot.data, .group_by, average=TRUE, store.number=NULL);",
@@ -615,12 +604,13 @@ setMethod(".defineDataInterface", "AggregatedDotPlot", function(x, se, select_in
         )
     })
 
-    .addSpecificTour(class(x), .ADPCapMaxRows, function(plot_name) {
+    .addSpecificTour(class(x)[1], .ADPCapRowSelection, function(plot_name) {
         data.frame(
             rbind(
                 c(
-                    element=paste0("#", plot_name, "_", .ADPCapMaxRows),
-                    intro="We can check this box to cap the maximum number of rows to be shown on the plot. This prevents the application from freezing if we ask it to plot too many genes.<br/><br/><strong>Check this box if it isn't already checked.</strong>"
+                    element = paste0("#", plot_name, "_", .ADPCapRowSelection),
+                    intro = "Sometimes, when receiving a multiple selection of rows from another panel, there may be too many rows to visualize efficiently on the plot. This field allows us to cap the number of rows in the selection so tha
+ the application does not freeze while attempting to render a very large plot. (Setting this value to zero will show all selected rows.)"
                 )
             )
         )
@@ -684,13 +674,18 @@ The clustering itself is done on the group averages using <code>hclust</code>, i
             actionButton(.input_FUN(.dimnamesModalOpen), label="Edit feature names"),
             br(), br()
         ),
-        .checkboxInput.iSEE(x, .ADPCapMaxRows, label="Cap the maximum number of rows",
-            value=x[[.ADPCapMaxRows]]),
         .conditionalOnCheckSolo(
-            .input_FUN(.ADPCapMaxRows),
-            on_select=TRUE,
-            numericInput(.input_FUN(.ADPMaxRows), label="Maximum number of rows", 
-                value=x[[.ADPMaxRows]], min=1, step=1)
+            .input_FUN(.ADPCustomFeatNames),
+            on_select=FALSE,
+            .numericInput.iSEE(
+                x,
+                .ADPCapRowSelection,
+                label="Cap on the number of selected rows",
+                value=slot(x, .ADPCapRowSelection),
+                min=0,
+                step=1,
+                help = TRUE
+            ),
         ),
         .checkboxInput.iSEE(x, .ADPClusterFeatures, label="Cluster rows (on averages)",
             value=x[[.ADPClusterFeatures]]),
@@ -864,6 +859,7 @@ setMethod(".createObservers", "AggregatedDotPlot", function(x, se, input, sessio
     # as there aren't any selections transmitted from this panel anyway.
     .createProtectedParameterObservers(plot_name,
         fields=c(.ADPCustomFeatNames,
+            .ADPCapRowSelection,
             .ADPClusterFeatures,
             .ADPClusterDistanceFeatures,
             .ADPClusterMethodFeatures),

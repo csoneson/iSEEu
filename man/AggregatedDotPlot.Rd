@@ -38,12 +38,10 @@ Defaults to \code{TRUE}.
 typically corresponding to the row names of the \linkS4class{SummarizedExperiment}.
 Names should be new-line separated within this string.
 Defaults to the name of the first row in the SummarizedExperiment.
-\item \code{CapMaxRows}, a logical scalar indicating whether to cap the number of features to be shown on the plot.
-This ensures that the \pkg{iSEE} application does not freeze when asked to cluster a very large selection of rows.
-Defaults to \code{TRUE}, in which case a notification will be raised if the cap needs to be enforced.
-\item \code{MaxRows}, an integer specifying the cap on the number of features to be shown on the plot.
-Only used if \code{CapMaxRows} is set to \code{TRUE}.
-Defaults to 50.
+\item \code{CapRowSelection}, an integer specifying the cap on the number of rows from a multiple selection to show in the heatmap,
+to avoid a frozen state when the application attempts to process a very large heatmap.
+Ignored if \code{CustomRows = TRUE}.
+Defaults to 200.
 }
 
 The following slots control the specification of groups:
